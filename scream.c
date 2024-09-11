@@ -11,6 +11,7 @@ Character device driver:/dev/scream like the /dev/zero but printing only setted 
 #include <linux/device.h>
 #include <linux/kdev_t.h>
 #include <linux/cdev.h>
+#include <linux/version.h>
 
 MODULE_LICENSE("GPL");
 
@@ -71,7 +72,11 @@ int register_device(void) {
 
     // Create sysfs information:
     printk( KERN_NOTICE "scream: Creating Device class\n" );
-    if ((cl = class_create(THIS_MODULE, "chardrv")) == NULL) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,4,0)
+    if ((cl = class_create(THIS_MODULE, "chrdrv")) == NULL) {
+#else
+    if ((cl = class_create("chrdrv")) == NULL) {
+#endif
         printk( KERN_ALERT "scream: Device class creation failed\n" );
         unregister_chrdev_region(first, 1);
         return -1;
