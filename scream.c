@@ -54,6 +54,14 @@ static struct file_operations simple_driver_fops = {
     .read    = device_file_read,
 };
 
+
+static char *scream_devnode(const struct device *dev, umode_t *mode) {
+    (void)dev;
+    if (mode)
+        *mode = 0444;
+    return NULL;
+}
+
 int register_device(void) {
     int res = 0;
     // Hi
@@ -78,17 +86,15 @@ int register_device(void) {
     if ((cl = class_create("chrdrv")) == NULL) {
 #endif
         printk( KERN_ALERT "scream: Device class creation failed\n" );
-        unregister_chrdev_region(first, 1);
-        return -1;
+        goto err_class;
     }
+    cl->devnode = scream_devnode;
 
     // Create device
     printk( KERN_NOTICE "scream: Creating Device\n" );
     if (device_create(cl, NULL, first, NULL, "scream") == NULL) {
         printk( KERN_ALERT "scream: Device creation failed\n" );
-        class_destroy(cl);
-        unregister_chrdev_region(first, 1);
-        return -1;
+        goto err_create;
     }
 
     // Init device
@@ -99,15 +105,20 @@ int register_device(void) {
     printk( KERN_ALERT "scream: Adding device\n" );
     if (cdev_add(&c_dev, first, 1) == -1) {
         printk( KERN_ALERT "scream: Device addition failed\n" );
-        device_destroy(cl, first);
-        class_destroy(cl);
-        unregister_chrdev_region(first, 1);
-        return -1;
+        goto err_add;
     }
 
     // Bye
     printk( KERN_NOTICE "scream: Function register_device is returning\n" );
     return 0;
+
+err_add:
+    device_destroy(cl, first);
+err_create:
+    class_destroy(cl);
+err_class:
+    unregister_chrdev_region(first, 1);
+    return -1;
 }
 
 void unregister_device(void) {

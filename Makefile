@@ -110,7 +110,7 @@ local_unload:
 create:
 	# Not required since (#8 from Dreirund) as load is doing it
 	@$(call title, "Creating node device /dev/scream")
-	mknod /dev/$(TARGET_MODULE) c $(shell cat /proc/devices | grep $(TARGET_MODULE)$ | cut -d ' ' -f1) 0
+	mknod -m a=r /dev/$(TARGET_MODULE) c $(shell cat /proc/devices | grep $(TARGET_MODULE)$ | cut -d ' ' -f1) 0
 	@echo
 
 delete:
